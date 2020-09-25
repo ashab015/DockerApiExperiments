@@ -1,0 +1,111 @@
+﻿<link href="~/css/jquery.json-viewer.css" rel="stylesheet" />
+<script src="~/js/jquery.json-viewer.js"></script>
+
+<div>
+    <h1>
+        Creation
+    </h1>
+    <br />
+    <button id="createMySqlDocker">
+        Create MySql Docker Container
+    </button>
+    <button id="createAmazonDynamoDb">
+        Create Amazon Dynamo Db Docker Container
+    </button>
+    <br />
+    <br />
+    <div>
+        <div><span id="dockerStatus"></span></div>
+    </div>
+</div>
+
+<div>
+    <br />
+    <br />
+    <h1>
+        Monitoring
+    </h1>
+    <label>
+        Container Count: <span id="containerCount"></span>
+    </label>
+    <br />
+    <div>
+        <pre style="width: 100%;" id="monitorJson"></pre>
+    </div>
+</div>
+
+<div>
+    <br />
+    <br />
+    <h1>
+        Load Distribution
+    </h1>
+    <br />
+    <div>
+
+    </div>
+</div>
+
+
+<script>
+
+    var progressbar = $("#progressbar").progressbar({
+        value: 0
+    });
+
+    $("#createMySqlDocker").click(function () {
+        $("#createMySqlDocker").prop("disabled", true);
+        $.get("/api/createmysqldatabase", function (data) {
+            $("#createMySqlDocker").prop("disabled", false);
+        });
+    });
+
+    $("#createAmazonDynamoDb").click(function () {
+        $("#createAmazonDynamoDb").prop("disabled", true);
+        $.get("/api/createamazondynamodb", function (data) {
+            $("#createAmazonDynamoDb").prop("disabled", false);
+        });
+    });
+
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/signalr")
+        .configureLogging(signalR.LogLevel.Information)
+        .build();
+
+    async function start() {
+        try {
+            await connection.start();
+            console.log("connected");
+        } catch (err) {
+            console.log(err);
+            setTimeout(() => start(), 5000);
+        }
+    };
+
+    connection.onclose(async () => {
+        await start();
+    });
+
+    // Start the connection.
+    start();
+
+    connection.on("message", function (user, message) {
+
+        var obj = JSON.parse(message);
+        console.log(obj);
+        switch (obj.type) {
+            case "progress":
+                {
+                    $("#dockerStatus").text(obj.status);
+                    break;
+                }
+            case "monitor":
+                {
+                    var data = obj.objects.data;
+                    $('#monitorJson').jsonViewer(data);
+                    $("#containerCount").text(data.length);
+                    break;
+                }
+        }
+    });
+</script>

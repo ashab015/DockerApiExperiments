@@ -1,0 +1,21 @@
+﻿@using Newtonsoft.Json
+
+<script src="https://code.jquery.com/jquery.min.js"></script>
+<link href="~/css/jquery.json-viewer.css" rel="stylesheet" />
+<script src="~/js/jquery.json-viewer.js"></script>
+
+@model string
+
+@{
+    string json = Model;
+}
+
+<pre style="width: 800px;" id="json-viewer"></pre>
+
+<script>
+    
+    var jsonStr = @Html.Raw(JsonConvert.SerializeObject(json));
+    var jsonObject = JSON.parse(jsonStr);
+    $('#json-viewer').jsonViewer(jsonObject);
+
+</script>
